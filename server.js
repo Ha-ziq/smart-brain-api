@@ -4,47 +4,44 @@ import cors from "cors"
 import { Model } from 'clarifai-nodejs';
 import knex from 'knex';
 import bcrypt from 'bcrypt'
+import path, { dirname } from "path";
+import { fileURLToPath } from "url";
+
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = dirname(__filename);
+const PORT = process.env.PORT || 3000;
 
 const saltRounds = 10;
+
 const db = knex({
     client: 'pg',
-    connection: {
+    connection:process.env.DATABASE_URL ||
+    
+    {
         host: '127.0.0.1',
         user: 'postgres',
         password: 'password123',
         database: 'users'
     }
-})
+});
 
 
-const database = {
-    users: [
-        {
-            id: 123,
-            name: "haziq",
-            email: "haziq@gmail.com",
-            password: "cookies",
-            entries: 0,
-            joined: new Date()
-        },
-        {
-            id: 124,
-            name: "annie",
-            email: "annie@gmail.com",
-            password: "bananas",
-            entries: 0,
-            joined: new Date()
-        },
-    ]
-}
+
 const app = express();
 app.use(bodyParser.json())
 app.use(cors());
+// app.use(express.static(path.join(__dirname, "dist")));
 
 
-app.get("/", (re, res) => {
-    res.send(database.users)
-})
+
+app.get("/", async (req, res) => {
+    try {
+        const users = await db.select("*").from("users");
+        res.json(users);
+    } catch (err) {
+        res.status(500).json("Error fetching users");
+    }
+});
 
 app.post("/signin", (req, res) => {
    const {email,password}=req.body;
@@ -95,8 +92,8 @@ app.post("/register", (req, res) => {
             .catch(trx.rollback)      
         })
         .catch(err => { res.status(400).json("connot register") })
-})
-
+    })
+    
 app.get("/profile/:id", (req, res) => {
     const { id } = req.params;
     db.select('*').from('users').where({ id })
@@ -173,8 +170,10 @@ app.post("/face-detect", async (req, res) => {
 });
 
 
+// app.get("*", (req, res) => {
+//   res.sendFile(path.join(__dirname, "dist", "index.html"));
+// });
 
-
-app.listen(3000, () => {
-    console.log("app is runninggg")
-})
+app.listen(PORT, () => {
+    console.log(`App is running on port ${PORT}`);
+});
