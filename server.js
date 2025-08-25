@@ -12,7 +12,7 @@ import { fileURLToPath } from "url";
 const PORT = process.env.PORT || 3000;
 
 const saltRounds = 10;
-
+console.log("DATABASE_URL:", process.env.DATABASE_URL);
 const db = knex({
     client: 'pg',
         connectionString: process.env.DATABASE_URL,
@@ -35,6 +35,7 @@ app.use(cors());
 
 
 app.get("/", async (req, res) => {
+    console.log("about to query user")
     try {
         const users = await db.select("*").from("users");
         res.json(users);
