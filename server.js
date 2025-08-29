@@ -6,12 +6,11 @@ import knex from 'knex';
 import bcrypt from 'bcrypt'
 import path, { dirname } from "path";
 import { fileURLToPath } from "url";
-import { useState } from 'react';
 
 // const __filename = fileURLToPath(import.meta.url);
 // const __dirname = dirname(__filename);
 const PORT = process.env.PORT || 3000;
-const [detected,setDetected]=useState(false);
+
 const saltRounds = 10;
 console.log("DATABASE_URL:", process.env.DATABASE_URL);
 const db = knex({
@@ -115,9 +114,7 @@ app.get("/profile/:id", (req, res) => {
 
 app.put("/image", (req, res) => {
     const { id } = req.body;
-    if(detected){
-
-        db('users').where('id', '=', id)
+    db('users').where('id', '=', id)
         .increment('entries', 1)
         .returning('entries')
         .then(entries => {
@@ -126,7 +123,6 @@ app.put("/image", (req, res) => {
         .catch(err => {
             res.status(400).json("unable to get entries")
         })
-    }
 })
 
 // ----- Clarifai SDK setup -----
@@ -142,7 +138,7 @@ const detectorModel = new Model({
 function extractFaceBoxes(prediction) {
     const regions = prediction?.[0]?.data?.regionsList;
     if (!regions) return [];
-    setDetected(true);
+
     return regions.map(region => {
         const box = region.regionInfo?.boundingBox;
         return {
@@ -169,7 +165,7 @@ app.post("/face-detect", async (req, res) => {
 
         // Extract bounding boxes
         const boxes = extractFaceBoxes(prediction);
-        
+
         res.json({ boxes });
     } catch (err) {
         console.error("Clarifai API error:", err);
